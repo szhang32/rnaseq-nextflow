@@ -1,14 +1,12 @@
-process SAY_HELLO {
-
-    output:
-    path 'hello.txt'
-
-    script:
-    """
-    echo "Hello Nextflow" > hello.txt
-    """
-}
+nextflow.enable.dsl=2
 
 workflow {
-    SAY_HELLO()
+
+    reads_ch = Channel.of(
+        'sample1.fastq.gz',
+        'sample2.fastq.gz',
+        'sample3.fastq.gz'
+    )
+
+    reads_ch.view()
 }

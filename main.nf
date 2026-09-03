@@ -4,6 +4,8 @@ process FASTQC {
 
     tag "${sample}"
 
+	publishDir 'results/fastqc', mode: 'copy'
+
     input:
     tuple val(sample), path(reads)
 

@@ -1,21 +1,27 @@
 nextflow.enable.dsl=2
 
-process SHOW_READ {
+process SHOW_PAIR {
+
+    tag "${sample}"
 
     input:
-    path read
+    tuple val(sample), path(reads)
 
     script:
     """
-    echo "Processing ${read}"
+    echo "Sample: ${sample}"
+    echo "Reads: ${reads}"
     """
 }
 
 workflow {
 
-    reads_ch = Channel.fromPath('test/data/*.fastq.gz')
-    
-	reads_ch.view()
+    reads_ch = Channel.fromFilePairs(
+        'test/data/*_{R1,R2}.fastq.gz',
+        checkIfExists: true
+    )
 
-    SHOW_READ(reads_ch)
+    reads_ch.view()
+
+    SHOW_PAIR(reads_ch)
 }

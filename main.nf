@@ -1,12 +1,21 @@
 nextflow.enable.dsl=2
 
+process SHOW_READ {
+
+    input:
+    path read
+
+    script:
+    """
+    echo "Processing ${read}"
+    """
+}
+
 workflow {
 
-    reads_ch = Channel.of(
-        'sample1.fastq.gz',
-        'sample2.fastq.gz',
-        'sample3.fastq.gz'
-    )
+    reads_ch = Channel.fromPath('test/data/*.fastq.gz')
+    
+	reads_ch.view()
 
-    reads_ch.view()
+    SHOW_READ(reads_ch)
 }

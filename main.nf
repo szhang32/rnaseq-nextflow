@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-process SHOW_PAIR {
+process FASTQC {
 
     tag "${sample}"
 
@@ -8,27 +8,12 @@ process SHOW_PAIR {
     tuple val(sample), path(reads)
 
     output:
-    tuple val(sample), path("*.txt"), emit: report
+    path "*_fastqc.html"
+    path "*_fastqc.zip"
 
     script:
     """
-    echo "Sample: ${sample}" > ${sample}.txt
-    echo "R1: ${reads[0]}" >> ${sample}.txt
-    echo "R2: ${reads[1]}" >> ${sample}.txt
-    """
-}
-
-process CHECK_REPORT {
-
-    tag "${sample}"
-
-    input:
-    tuple val(sample), path(report)
-
-    script:
-    """
-    echo "Checking ${report}"
-    cat ${report}
+    fastqc ${reads}
     """
 }
 
@@ -39,8 +24,5 @@ workflow {
         checkIfExists: true
     )
 
-    result_ch = SHOW_PAIR(reads_ch)
-
-    CHECK_REPORT(result_ch.report)
+    FASTQC(reads_ch)
 }
-

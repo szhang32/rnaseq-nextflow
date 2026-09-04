@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+
 process FASTQC {
 
     tag "${sample}"
@@ -42,6 +43,40 @@ process MULTIQC {
 }
 
 
+process STAR_ALIGN {
+
+    tag "${sample}"
+
+    module 'STAR/2.7.9a'
+
+
+    publishDir 'results/star', mode: 'copy'
+
+    input:
+    tuple val(sample), path(reads)
+    path genome_index
+
+    output:
+    tuple val(sample),
+          path("${sample}.Aligned.sortedByCoord.out.bam"),
+          emit: bam
+
+    path "${sample}.Log.final.out",
+         emit: star_log
+
+    script:
+    """
+    STAR \
+        --genomeDir ${genome_index} \
+        --readFilesIn ${reads[0]} ${reads[1]} \
+        --readFilesCommand zcat \
+        --runThreadN ${task.cpus} \
+        --outSAMtype BAM SortedByCoordinate \
+        --outFileNamePrefix ${sample}.
+    """
+}
+
+
 workflow {
 
     reads_ch = Channel.fromFilePairs(
@@ -49,9 +84,25 @@ workflow {
         checkIfExists: true
     )
 
+    star_index_ch = Channel.fromPath(
+        '/home/szhang32/ref/mm39/STAR_ncbi_mm39_refSeq',
+        checkIfExists: true
+    )
+
+    /*
+     * QC branch
+     */
     fastqc_out = FASTQC(reads_ch)
 
     MULTIQC(
         fastqc_out.fastqc_zip.collect()
+    )
+
+    /*
+     * Alignment branch
+     */
+    STAR_ALIGN(
+        reads_ch,
+        star_index_ch
     )
 }

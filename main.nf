@@ -4,20 +4,43 @@ process FASTQC {
 
     tag "${sample}"
 
-	publishDir 'results/fastqc', mode: 'copy'
+    conda '/home/szhang32/.conda/envs/nf-fastqc'
+
+    publishDir 'results/fastqc', mode: 'copy'
 
     input:
     tuple val(sample), path(reads)
 
     output:
+    path "*_fastqc.zip", emit: fastqc_zip
     path "*_fastqc.html"
-    path "*_fastqc.zip"
 
     script:
     """
     fastqc ${reads}
     """
 }
+
+
+process MULTIQC {
+
+    conda '/home/szhang32/.conda/envs/multiqc'
+
+    publishDir 'results/multiqc', mode: 'copy'
+
+    input:
+    path fastqc_files
+
+    output:
+    path "multiqc_report.html"
+    path "multiqc_data"
+
+    script:
+    """
+    multiqc .
+    """
+}
+
 
 workflow {
 
@@ -26,5 +49,9 @@ workflow {
         checkIfExists: true
     )
 
-    FASTQC(reads_ch)
+    fastqc_out = FASTQC(reads_ch)
+
+    MULTIQC(
+        fastqc_out.fastqc_zip.collect()
+    )
 }
